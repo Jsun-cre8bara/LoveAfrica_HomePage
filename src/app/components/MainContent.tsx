@@ -25,8 +25,7 @@ export function MainContent({ notices, isAdmin, onAddNotice, onEditNotice, onDel
               </div>
               <h3 className="text-2xl mb-4">후원하기</h3>
               <p className="text-gray-600 mb-6">
-                정기/일시 후원을 통해<br />
-                아프리카 어린이들을 도와주세요
+                정기/일시 후원을 위한 'e-Form 후원 신청서' 입니다.
               </p>
               <Button 
                 className="w-full" 
@@ -37,24 +36,24 @@ export function MainContent({ notices, isAdmin, onAddNotice, onEditNotice, onDel
                   target="_blank" 
                   rel="noopener noreferrer"
                 >
-                  후원 신청
+                  후원신청서 작성
                 </a>
               </Button>
             </div>
           </Card>
 
-          {/* 후원금 조회 */}
+          {/* 기부금 영수증 */}
           <Card className="p-8 hover:shadow-lg transition-shadow bg-white">
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4">
                 <DollarSign className="text-white" size={32} />
               </div>
-              <h3 className="text-2xl mb-4">후원금 조회</h3>
+              <h3 className="text-2xl mb-4">기부금 영수증</h3>
               <p className="text-gray-600 mb-6">
-                나의 후원 내역을<br />
-                확인할 수 있습니다
+                기부금 영수증을<br />
+                발급받으실 수 있습니다
               </p>
-              <Button variant="outline" className="w-full">조회하기</Button>
+              <Button variant="outline" className="w-full">발급하기</Button>
             </div>
           </Card>
 
