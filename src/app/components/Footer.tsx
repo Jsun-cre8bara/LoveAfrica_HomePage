@@ -10,7 +10,7 @@ export function Footer() {
           <div>
             <h3 className="text-xl mb-4 font-semibold">LOVE AFRICA</h3>
             <p className="text-sm mb-4">
-              아프리카 어린이들의 더 나은 미래를 위해<br />
+              아프리카의의 더 나은 미래를 위해<br />
               함께 노력하는 비영리 단체입니다.
             </p>
             <div className="text-sm space-y-1">
@@ -27,7 +27,7 @@ export function Footer() {
               <p>신한은행: 100-032-649001</p>
               <p>예금주: 사단법인 러브아프리카</p>
               <p className="text-xs text-gray-500 mt-3">
-                * 후원금은 아프리카 어린이 교육, 의료, 식수 지원 등에 사용됩니다.
+                * 후원금은 아프리카 교육, 의료, 식수 지원 등에 사용됩니다.
               </p>
             </div>
           </div>
