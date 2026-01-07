@@ -1,4 +1,6 @@
 import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import sponbanner1 from '../../assets/sponbanner1.png';
+import sponbanner2 from '../../assets/sponbanner2.png';
 
 export function Footer() {
   return (
@@ -34,12 +36,8 @@ export function Footer() {
         <div className="border-t border-gray-300 pt-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-6">
-              <div className="text-sm">
-                <span className="font-semibold">외교부 지정 비영리단체</span>
-              </div>
-              <div className="text-sm">
-                <span className="font-semibold">서울시 후원단체</span>
-              </div>
+              <img src={sponbanner2} alt="외교부 지정 비영리단체" className="h-12 w-auto" />
+              <img src={sponbanner1} alt="서울시 후원단체" className="h-12 w-auto" />
             </div>
             <div className="text-sm text-gray-500">
               &copy; 2026 LOVE AFRICA. All rights reserved.
