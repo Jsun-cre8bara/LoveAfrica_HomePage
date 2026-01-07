@@ -6,7 +6,7 @@ export function Footer() {
       <div className="container mx-auto max-w-6xl">
         <div className="grid md:grid-cols-2 gap-8 mb-8">
           <div>
-            <h3 className="text-xl mb-4 font-semibold">LOVE FOR AFRICA</h3>
+            <h3 className="text-xl mb-4 font-semibold">LOVE AFRICA</h3>
             <p className="text-sm mb-4">
               아프리카 어린이들의 더 나은 미래를 위해<br />
               함께 노력하는 비영리 단체입니다.
@@ -42,7 +42,7 @@ export function Footer() {
               </div>
             </div>
             <div className="text-sm text-gray-500">
-              &copy; 2026 LOVE FOR AFRICA. All rights reserved.
+              &copy; 2026 LOVE AFRICA. All rights reserved.
             </div>
           </div>
         </div>
