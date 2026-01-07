@@ -1,18 +1,38 @@
-import { Heart, DollarSign, FileText, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import { Heart, DollarSign, FileText, ChevronRight, Edit, Trash2, Plus, Mail } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Notice } from './NoticeEditor';
+import { Newsletter } from './NewsletterEditor';
 
 interface MainContentProps {
   notices: Notice[];
+  newsletters: Newsletter[];
   isAdmin: boolean;
   onAddNotice: () => void;
   onEditNotice: (notice: Notice) => void;
   onDeleteNotice: (id: string) => void;
   onViewNotice?: (notice: Notice) => void;
+  onAddNewsletter: () => void;
+  onEditNewsletter: (newsletter: Newsletter) => void;
+  onDeleteNewsletter: (id: string) => void;
+  onViewNewsletter?: (newsletter: Newsletter) => void;
 }
 
-export function MainContent({ notices, isAdmin, onAddNotice, onEditNotice, onDeleteNotice, onViewNotice }: MainContentProps) {
+export function MainContent({ 
+  notices, 
+  newsletters, 
+  isAdmin, 
+  onAddNotice, 
+  onEditNotice, 
+  onDeleteNotice, 
+  onViewNotice,
+  onAddNewsletter,
+  onEditNewsletter,
+  onDeleteNewsletter,
+  onViewNewsletter
+}: MainContentProps) {
+  // 게시된 뉴스레터만 필터링
+  const publishedNewsletters = newsletters.filter(n => n.published);
   return (
     <section className="py-16 px-6 bg-gray-50">
       <div className="container mx-auto max-w-6xl">
@@ -144,31 +164,80 @@ export function MainContent({ notices, isAdmin, onAddNotice, onEditNotice, onDel
             </div>
           </Card>
 
-          {/* 기부금 영수증 안내 */}
-          <div className="space-y-6">
-            <Card className="p-6 bg-white">
-              <h3 className="text-xl mb-4 text-blue-600">기부금영수증</h3>
-              <p className="text-gray-700 mb-4">
-                기부금 영수증은 매년 1월에 일괄 발급됩니다.
-              </p>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-700">
-                  ✓ 연말정산 공제 가능<br />
-                  ✓ 기획재정부 지정 기부금 단체<br />
-                  ✓ 세액공제 15% (1천만원 초과분 30%)
-                </p>
+          {/* 뉴스레터 */}
+          <Card className="p-6 bg-white">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl text-blue-600">뉴스레터</h3>
+              <div className="flex gap-2">
+                {isAdmin && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={onAddNewsletter}
+                    className="text-blue-600"
+                  >
+                    <Plus size={16} className="mr-1" />
+                    작성
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm">
+                  더보기 <ChevronRight size={16} />
+                </Button>
               </div>
-            </Card>
-
-            <Card className="p-6 bg-white">
-              <h3 className="text-xl mb-4 text-blue-600">연락처</h3>
-              <div className="space-y-2 text-gray-700">
-                <p>📞 전화: 1522-5158</p>
-                <p>📧 이메일: <a href="mailto:loveafrica1004@gmail.com" className="hover:text-blue-600">loveafrica1004@gmail.com</a></p>
-                <p>🏢 주소: 서울특별시 용산구 한강대로 44길 20, 301호</p>
-              </div>
-            </Card>
-          </div>
+            </div>
+            <div className="space-y-4">
+              {publishedNewsletters.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  {isAdmin ? '게시된 뉴스레터가 없습니다.' : '등록된 뉴스레터가 없습니다.'}
+                </div>
+              ) : (
+                publishedNewsletters.slice(0, 5).map((newsletter) => (
+                  <div key={newsletter.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                    <div 
+                      className="flex-1 cursor-pointer"
+                      onClick={() => onViewNewsletter && onViewNewsletter(newsletter)}
+                    >
+                      <div className="text-gray-900 hover:text-blue-600 flex items-center gap-2">
+                        <Mail size={16} className="text-blue-500" />
+                        {newsletter.title}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-sm text-gray-500">
+                        {new Date(newsletter.created_at).toLocaleDateString('ko-KR', { 
+                          year: 'numeric', 
+                          month: '2-digit', 
+                          day: '2-digit' 
+                        }).replace(/\. /g, '.').replace(/\.$/, '')}
+                      </div>
+                      {isAdmin && (
+                        <div className="flex gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditNewsletter(newsletter);
+                            }}
+                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              newsletter.id && onDeleteNewsletter(newsletter.id);
+                            }}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
         </div>
       </div>
     </section>

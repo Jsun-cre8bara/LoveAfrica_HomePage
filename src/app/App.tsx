@@ -7,6 +7,8 @@ import { Footer } from './components/Footer';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { NoticeEditor, Notice } from './components/NoticeEditor';
 import { NoticeDetailModal } from './components/NoticeDetailModal';
+import { NewsletterEditor, Newsletter } from './components/NewsletterEditor';
+import { NewsletterDetailModal } from './components/NewsletterDetailModal';
 import { AdminSetup } from './components/AdminSetup';
 
 export default function App() {
@@ -19,11 +21,19 @@ export default function App() {
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Newsletter 상태
+  const [isNewsletterEditorOpen, setIsNewsletterEditorOpen] = useState(false);
+  const [isNewsletterDetailOpen, setIsNewsletterDetailOpen] = useState(false);
+  const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
+  const [editingNewsletter, setEditingNewsletter] = useState<Newsletter | null>(null);
+  const [selectedNewsletter, setSelectedNewsletter] = useState<Newsletter | null>(null);
 
-  // 세션 확인 및 공지사항 로드
+  // 세션 확인 및 공지사항, 뉴스레터 로드
   useEffect(() => {
     checkSession();
     loadNotices();
+    loadNewsletters();
   }, []);
 
   // 세션 확인
@@ -53,6 +63,24 @@ export default function App() {
       console.error('Failed to load notices:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // 뉴스레터 로드
+  const loadNewsletters = async () => {
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-5f047ca7/newsletters`,
+        {
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+          },
+        }
+      );
+      const data = await response.json();
+      setNewsletters(data.newsletters || []);
+    } catch (err) {
+      console.error('Failed to load newsletters:', err);
     }
   };
 
@@ -252,6 +280,121 @@ export default function App() {
     }
   };
 
+  // Newsletter 관련 핸들러
+  const handleAddNewsletter = () => {
+    setEditingNewsletter(null);
+    setIsNewsletterEditorOpen(true);
+  };
+
+  const handleEditNewsletter = (newsletter: Newsletter) => {
+    setEditingNewsletter(newsletter);
+    setIsNewsletterEditorOpen(true);
+  };
+
+  const handleViewNewsletter = (newsletter: Newsletter) => {
+    setSelectedNewsletter(newsletter);
+    setIsNewsletterDetailOpen(true);
+  };
+
+  const handleSaveNewsletter = async (newsletter: Newsletter, files?: File[]) => {
+    if (!accessToken) {
+      alert('로그인이 필요합니다.');
+      throw new Error('No access token');
+    }
+
+    try {
+      // 1. 파일 업로드
+      let uploadedAttachments = newsletter.attachments || [];
+      
+      if (files && files.length > 0) {
+        for (const file of files) {
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const uploadResponse = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-5f047ca7/upload`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+              },
+              body: formData,
+            }
+          );
+
+          if (!uploadResponse.ok) {
+            throw new Error('파일 업로드 실패');
+          }
+
+          const uploadData = await uploadResponse.json();
+          uploadedAttachments.push(uploadData.attachment);
+        }
+      }
+
+      // 2. 뉴스레터 저장
+      const newsletterToSave = {
+        title: newsletter.title,
+        content: newsletter.content,
+        published: newsletter.published,
+        created_at: newsletter.created_at,
+        updated_at: newsletter.updated_at || new Date().toISOString(),
+        attachments: uploadedAttachments,
+      };
+
+      const url = newsletter.id
+        ? `https://${projectId}.supabase.co/functions/v1/make-server-5f047ca7/newsletters/${newsletter.id}`
+        : `https://${projectId}.supabase.co/functions/v1/make-server-5f047ca7/newsletters`;
+      
+      const method = newsletter.id ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(newsletterToSave),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `저장 실패 (${response.status})`);
+      }
+
+      await loadNewsletters();
+    } catch (err: any) {
+      console.error('Save newsletter error:', err);
+      alert(`저장에 실패했습니다:\n${err.message}`);
+      throw err;
+    }
+  };
+
+  const handleDeleteNewsletter = async (id: string) => {
+    if (!accessToken || !confirm('정말 삭제하시겠습니까?')) return;
+
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-5f047ca7/newsletters/${id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete newsletter');
+      }
+
+      await loadNewsletters();
+    } catch (err: any) {
+      console.error('Delete newsletter error:', err);
+      alert(`삭제에 실패했습니다: ${err.message}`);
+    }
+  };
+
   return (
     <div className="size-full">
       <Header 
@@ -263,11 +406,16 @@ export default function App() {
         <Hero />
         <MainContent 
           notices={notices}
+          newsletters={newsletters}
           isAdmin={isAdmin}
           onAddNotice={handleAddNotice}
           onEditNotice={handleEditNotice}
           onDeleteNotice={handleDeleteNotice}
           onViewNotice={handleViewNotice}
+          onAddNewsletter={handleAddNewsletter}
+          onEditNewsletter={handleEditNewsletter}
+          onDeleteNewsletter={handleDeleteNewsletter}
+          onViewNewsletter={handleViewNewsletter}
         />
       </main>
       <Footer />
@@ -295,6 +443,25 @@ export default function App() {
           setSelectedNotice(null);
         }}
         notice={selectedNotice}
+      />
+
+      <NewsletterEditor
+        isOpen={isNewsletterEditorOpen}
+        onClose={() => {
+          setIsNewsletterEditorOpen(false);
+          setEditingNewsletter(null);
+        }}
+        onSave={handleSaveNewsletter}
+        editingNewsletter={editingNewsletter}
+      />
+
+      <NewsletterDetailModal
+        isOpen={isNewsletterDetailOpen}
+        onClose={() => {
+          setIsNewsletterDetailOpen(false);
+          setSelectedNewsletter(null);
+        }}
+        newsletter={selectedNewsletter}
       />
 
       <AdminSetup
