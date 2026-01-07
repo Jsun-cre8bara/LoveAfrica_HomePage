@@ -96,8 +96,12 @@ export default function App() {
     }
 
     if (data.session?.access_token) {
+      console.log('✅ 로그인 성공! Access Token:', data.session.access_token.substring(0, 20) + '...');
       setIsAdmin(true);
       setAccessToken(data.session.access_token);
+      console.log('✅ accessToken 상태 설정 완료');
+    } else {
+      console.error('❌ Access Token이 없습니다!');
     }
   };
 
@@ -128,13 +132,16 @@ export default function App() {
     console.log('=== handleSaveNotice 시작 ===');
     console.log('isAdmin:', isAdmin);
     console.log('accessToken exists:', !!accessToken);
-    console.log('accessToken value:', accessToken?.substring(0, 20) + '...');
+    console.log('accessToken value:', accessToken);
+    console.log('accessToken type:', typeof accessToken);
     
     if (!accessToken) {
-      console.error('No access token - 로그인이 필요합니다');
+      console.error('❌ No access token - 로그인이 필요합니다');
       alert('로그인이 필요합니다.');
       throw new Error('No access token');
     }
+    
+    console.log('✅ accessToken 확인 완료, API 호출 시작');
 
     try {
       console.log('Notice data:', JSON.stringify(notice, null, 2));
