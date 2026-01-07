@@ -247,6 +247,156 @@ app.delete("/make-server-5f047ca7/notices/:id", async (c) => {
   }
 });
 
+// ========================================
+// NEWSLETTER API
+// ========================================
+
+// 뉴스레터 목록 조회
+app.get("/make-server-5f047ca7/newsletters", async (c) => {
+  try {
+    const newsletters = await kv.getByPrefix('newsletter:');
+    
+    // 생성일 순으로 정렬 (최신순)
+    const sortedNewsletters = newsletters.sort((a, b) => {
+      const dateA = new Date(a.created_at);
+      const dateB = new Date(b.created_at);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    return c.json({ newsletters: sortedNewsletters });
+  } catch (err: any) {
+    console.error('Get newsletters error:', err);
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// 뉴스레터 생성 (관리자만)
+app.post("/make-server-5f047ca7/newsletters", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    console.log('POST /newsletters - Authorization header:', c.req.header('Authorization')?.substring(0, 50) + '...');
+    
+    if (!accessToken) {
+      console.error('No access token provided');
+      return c.json({ error: 'No access token provided' }, 401);
+    }
+
+    // 관리자 인증 확인
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    console.log('Auth check result:', { user: user?.id, error: authError?.message });
+    
+    if (!user || authError) {
+      console.error('Unauthorized:', authError);
+      return c.json({ error: 'Unauthorized: ' + (authError?.message || 'No user') }, 401);
+    }
+
+    const { title, content, published, created_at, attachments = [] } = await c.req.json();
+    const id = Date.now().toString();
+    
+    const newsletter = {
+      id,
+      title,
+      content,
+      published,
+      created_at: created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      attachments,
+    };
+
+    await kv.set(`newsletter:${id}`, newsletter);
+    console.log('Newsletter created:', newsletter.id);
+
+    return c.json({ success: true, newsletter });
+  } catch (err: any) {
+    console.error('Create newsletter error:', err);
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// 뉴스레터 수정 (관리자만)
+app.put("/make-server-5f047ca7/newsletters/:id", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    console.log('PUT /newsletters/:id - Authorization header:', c.req.header('Authorization')?.substring(0, 50) + '...');
+    
+    if (!accessToken) {
+      console.error('No access token provided');
+      return c.json({ error: 'No access token provided' }, 401);
+    }
+
+    // 관리자 인증 확인
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    console.log('Auth check result:', { user: user?.id, error: authError?.message });
+    
+    if (!user || authError) {
+      console.error('Unauthorized:', authError);
+      return c.json({ error: 'Unauthorized: ' + (authError?.message || 'No user') }, 401);
+    }
+
+    const id = c.req.param('id');
+    const { title, content, published, created_at, updated_at, attachments } = await c.req.json();
+
+    const existingNewsletter = await kv.get(`newsletter:${id}`);
+    if (!existingNewsletter) {
+      console.error('Newsletter not found:', id);
+      return c.json({ error: 'Newsletter not found' }, 404);
+    }
+
+    const updatedNewsletter = {
+      ...existingNewsletter,
+      title,
+      content,
+      published,
+      created_at,
+      updated_at: updated_at || new Date().toISOString(),
+      attachments,
+    };
+
+    await kv.set(`newsletter:${id}`, updatedNewsletter);
+    console.log('Newsletter updated:', id);
+
+    return c.json({ success: true, newsletter: updatedNewsletter });
+  } catch (err: any) {
+    console.error('Update newsletter error:', err);
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// 뉴스레터 삭제 (관리자만)
+app.delete("/make-server-5f047ca7/newsletters/:id", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    console.log('DELETE /newsletters/:id - Authorization header:', c.req.header('Authorization')?.substring(0, 50) + '...');
+    
+    if (!accessToken) {
+      console.error('No access token provided');
+      return c.json({ error: 'No access token provided' }, 401);
+    }
+
+    // 관리자 인증 확인
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    console.log('Auth check result:', { user: user?.id, error: authError?.message });
+    
+    if (!user || authError) {
+      console.error('Unauthorized:', authError);
+      return c.json({ error: 'Unauthorized: ' + (authError?.message || 'No user') }, 401);
+    }
+
+    const id = c.req.param('id');
+    await kv.del(`newsletter:${id}`);
+    console.log('Newsletter deleted:', id);
+
+    return c.json({ success: true });
+  } catch (err: any) {
+    console.error('Delete newsletter error:', err);
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// ========================================
+// FILE UPLOAD
+// ========================================
+
 // 파일 업로드 (관리자만)
 app.post("/make-server-5f047ca7/upload", async (c) => {
   try {
