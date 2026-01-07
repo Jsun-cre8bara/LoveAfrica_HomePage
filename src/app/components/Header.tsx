@@ -22,7 +22,7 @@ export function Header({ isAdmin, onAdminLogin, onAdminLogout }: HeaderProps) {
               alt="LOA Logo" 
               className="h-12 w-auto"
             />
-            <span className="text-xl font-bold text-gray-800">LOVE FOR AFRICA</span>
+            <span className="text-xl font-bold text-gray-800">LOVE AFRICA</span>
           </div>
 
           {/* Desktop Navigation */}
