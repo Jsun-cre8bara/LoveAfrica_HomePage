@@ -1,7 +1,7 @@
 import { Menu, X, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from './ui/button';
-import logoImage from 'figma:asset/9cdfaca214ac12f6d1e899df895449f48cad4c88.png';
+import logoImage from '../../assets/9cdfaca214ac12f6d1e899df895449f48cad4c88.png';
 
 interface HeaderProps {
   isAdmin: boolean;
