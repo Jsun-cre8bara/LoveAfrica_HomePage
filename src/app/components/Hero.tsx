@@ -13,7 +13,6 @@ export function Hero() {
           <div className="w-72 h-72 bg-blue-500 rounded-full flex items-center justify-center text-white">
             <div className="text-center">
               <div className="text-5xl font-bold mb-2">LOVE</div>
-              <div className="text-4xl font-semibold mb-2">FOR</div>
               <div className="text-5xl font-bold">AFRICA</div>
             </div>
           </div>
