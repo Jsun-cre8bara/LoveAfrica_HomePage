@@ -47,7 +47,8 @@ app.use(
   "/*",
   cors({
     origin: "*",
-    allowHeaders: ["Content-Type", "Authorization"],
+    // apikey 헤더도 허용해야 프론트 요청이 차단되지 않습니다.
+    allowHeaders: ["Content-Type", "Authorization", "apikey"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
