@@ -7,10 +7,12 @@ interface HeaderProps {
   isAdmin: boolean;
   onAdminLogin: () => void;
   onAdminLogout: () => void;
+  onAdminSetup: () => void;
 }
 
-export function Header({ isAdmin, onAdminLogin, onAdminLogout }: HeaderProps) {
+export function Header({ isAdmin, onAdminLogin, onAdminLogout, onAdminSetup }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
 
   return (
     <header className="bg-white border-b border-gray-200">
@@ -44,7 +46,7 @@ export function Header({ isAdmin, onAdminLogin, onAdminLogout }: HeaderProps) {
             </a>
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 relative">
             {isAdmin ? (
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-600">관리자</span>
@@ -58,17 +60,39 @@ export function Header({ isAdmin, onAdminLogin, onAdminLogout }: HeaderProps) {
                 </Button>
               </div>
             ) : (
-              <>
+              <div className="relative">
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={onAdminLogin}
+                  onClick={() => setIsAdminMenuOpen(prev => !prev)}
                 >
                   관리자
                 </Button>
-                <Button size="sm">후원하기</Button>
-              </>
+                {isAdminMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-32 rounded-md border bg-white shadow-lg z-20">
+                    <button
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                      onClick={() => {
+                        setIsAdminMenuOpen(false);
+                        onAdminLogin();
+                      }}
+                    >
+                      로그인
+                    </button>
+                    <button
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                      onClick={() => {
+                        setIsAdminMenuOpen(false);
+                        onAdminSetup();
+                      }}
+                    >
+                      관리자 설정
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
+            <Button size="sm">후원하기</Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -114,6 +138,14 @@ export function Header({ isAdmin, onAdminLogin, onAdminLogout }: HeaderProps) {
                   onClick={onAdminLogin}
                 >
                   관리자 로그인
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="w-full"
+                  variant="outline"
+                  onClick={onAdminSetup}
+                >
+                  관리자 설정
                 </Button>
                 <Button size="sm" className="w-full">후원하기</Button>
               </>

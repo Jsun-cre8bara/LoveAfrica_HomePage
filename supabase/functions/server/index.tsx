@@ -2,7 +2,6 @@ import { Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import * as kv from "./kv_store.tsx";
 
 const app = new Hono();
 
@@ -91,33 +90,35 @@ app.post("/make-server-5f047ca7/admin/signup", async (c) => {
 // 공지사항 목록 조회
 app.get("/make-server-5f047ca7/notices", async (c) => {
   try {
-    const notices = await kv.getByPrefix('notice:');
-    
+    const { data: notices, error } = await supabase
+      .from('notices')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Get notices error:', error);
+      return c.json({ error: error.message }, 500);
+    }
+
     // 데이터가 없으면 초기 데이터 생성
-    if (notices.length === 0) {
+    if (!notices || notices.length === 0) {
       const initialNotices = [
-        { id: '1', date: '2025.01.03', title: '2025년 새해 인사 및 후원 안내', views: 124 },
-        { id: '2', date: '2024.12.28', title: '연말 특별 후원 캠페인', views: 256 },
-        { id: '3', date: '2024.12.20', title: '아프리카 학교 건립 프로젝트 완료', views: 189 },
-        { id: '4', date: '2024.12.15', title: '겨울철 긴급 구호물품 전달', views: 203 },
-        { id: '5', date: '2024.12.10', title: '후원금 사용 내역 공개', views: 312 },
+        { title: '2025년 새해 인사 및 후원 안내', content: '', date: '2025.01.03', views: 124 },
+        { title: '연말 특별 후원 캠페인', content: '', date: '2024.12.28', views: 256 },
+        { title: '아프리카 학교 건립 프로젝트 완료', content: '', date: '2024.12.20', views: 189 },
+        { title: '겨울철 긴급 구호물품 전달', content: '', date: '2024.12.15', views: 203 },
+        { title: '후원금 사용 내역 공개', content: '', date: '2024.12.10', views: 312 },
       ];
 
-      for (const notice of initialNotices) {
-        await kv.set(`notice:${notice.id}`, notice);
-      }
+      const { data: inserted } = await supabase
+        .from('notices')
+        .insert(initialNotices)
+        .select();
 
-      return c.json({ notices: initialNotices });
+      return c.json({ notices: inserted || [] });
     }
-    
-    // 날짜 순으로 정렬 (최신순)
-    const sortedNotices = notices.sort((a, b) => {
-      const dateA = new Date(a.date.replace(/\./g, '-'));
-      const dateB = new Date(b.date.replace(/\./g, '-'));
-      return dateB.getTime() - dateA.getTime();
-    });
 
-    return c.json({ notices: sortedNotices });
+    return c.json({ notices });
   } catch (err: any) {
     console.error('Get notices error:', err);
     return c.json({ error: err.message }, 500);
@@ -136,26 +137,22 @@ app.post("/make-server-5f047ca7/notices", async (c) => {
       return c.json({ error: 'No authorization header' }, 401);
     }
 
-    // 간단한 인증 체크 - Authorization 헤더만 있으면 허용
-    // (Supabase가 이미 검증했으므로)
     console.log('Authorization check passed');
 
     const { title, content, date, views = 0, attachments = [] } = await c.req.json();
-    const id = Date.now().toString();
     
-    const notice = {
-      id,
-      title,
-      content,
-      date,
-      views,
-      attachments,
-      createdAt: new Date().toISOString(),
-    };
+    const { data: notice, error } = await supabase
+      .from('notices')
+      .insert([{ title, content, date, views, attachments }])
+      .select()
+      .single();
 
-    await kv.set(`notice:${id}`, notice);
+    if (error) {
+      console.error('Create notice error:', error);
+      return c.json({ error: error.message }, 500);
+    }
+
     console.log('Notice created:', notice.id);
-
     return c.json({ success: true, notice });
   } catch (err: any) {
     console.error('Create notice error:', err);
@@ -179,26 +176,20 @@ app.put("/make-server-5f047ca7/notices/:id", async (c) => {
     const id = c.req.param('id');
     const { title, content, date, views, attachments } = await c.req.json();
 
-    const existingNotice = await kv.get(`notice:${id}`);
-    if (!existingNotice) {
-      console.error('Notice not found:', id);
-      return c.json({ error: 'Notice not found' }, 404);
+    const { data: notice, error } = await supabase
+      .from('notices')
+      .update({ title, content, date, views, attachments })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Update notice error:', error);
+      return c.json({ error: error.message }, error.code === 'PGRST116' ? 404 : 500);
     }
 
-    const updatedNotice = {
-      ...existingNotice,
-      title,
-      content,
-      date,
-      views,
-      attachments,
-      updatedAt: new Date().toISOString(),
-    };
-
-    await kv.set(`notice:${id}`, updatedNotice);
     console.log('Notice updated:', id);
-
-    return c.json({ success: true, notice: updatedNotice });
+    return c.json({ success: true, notice });
   } catch (err: any) {
     console.error('Update notice error:', err);
     return c.json({ error: err.message }, 500);
@@ -219,9 +210,18 @@ app.delete("/make-server-5f047ca7/notices/:id", async (c) => {
     console.log('Authorization check passed');
 
     const id = c.req.param('id');
-    await kv.del(`notice:${id}`);
-    console.log('Notice deleted:', id);
+    
+    const { error } = await supabase
+      .from('notices')
+      .delete()
+      .eq('id', id);
 
+    if (error) {
+      console.error('Delete notice error:', error);
+      return c.json({ error: error.message }, 500);
+    }
+
+    console.log('Notice deleted:', id);
     return c.json({ success: true });
   } catch (err: any) {
     console.error('Delete notice error:', err);
@@ -236,16 +236,17 @@ app.delete("/make-server-5f047ca7/notices/:id", async (c) => {
 // 뉴스레터 목록 조회
 app.get("/make-server-5f047ca7/newsletters", async (c) => {
   try {
-    const newsletters = await kv.getByPrefix('newsletter:');
-    
-    // 생성일 순으로 정렬 (최신순)
-    const sortedNewsletters = newsletters.sort((a, b) => {
-      const dateA = new Date(a.created_at);
-      const dateB = new Date(b.created_at);
-      return dateB.getTime() - dateA.getTime();
-    });
+    const { data: newsletters, error } = await supabase
+      .from('newsletters')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    return c.json({ newsletters: sortedNewsletters });
+    if (error) {
+      console.error('Get newsletters error:', error);
+      return c.json({ error: error.message }, 500);
+    }
+
+    return c.json({ newsletters: newsletters || [] });
   } catch (err: any) {
     console.error('Get newsletters error:', err);
     return c.json({ error: err.message }, 500);
@@ -265,22 +266,20 @@ app.post("/make-server-5f047ca7/newsletters", async (c) => {
 
     console.log('Authorization check passed');
 
-    const { title, content, published, created_at, attachments = [] } = await c.req.json();
-    const id = Date.now().toString();
+    const { title, content, published, attachments = [] } = await c.req.json();
     
-    const newsletter = {
-      id,
-      title,
-      content,
-      published,
-      created_at: created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      attachments,
-    };
+    const { data: newsletter, error } = await supabase
+      .from('newsletters')
+      .insert([{ title, content, published, attachments }])
+      .select()
+      .single();
 
-    await kv.set(`newsletter:${id}`, newsletter);
+    if (error) {
+      console.error('Create newsletter error:', error);
+      return c.json({ error: error.message }, 500);
+    }
+
     console.log('Newsletter created:', newsletter.id);
-
     return c.json({ success: true, newsletter });
   } catch (err: any) {
     console.error('Create newsletter error:', err);
@@ -302,28 +301,22 @@ app.put("/make-server-5f047ca7/newsletters/:id", async (c) => {
     console.log('Authorization check passed');
 
     const id = c.req.param('id');
-    const { title, content, published, created_at, updated_at, attachments } = await c.req.json();
+    const { title, content, published, attachments } = await c.req.json();
 
-    const existingNewsletter = await kv.get(`newsletter:${id}`);
-    if (!existingNewsletter) {
-      console.error('Newsletter not found:', id);
-      return c.json({ error: 'Newsletter not found' }, 404);
+    const { data: newsletter, error } = await supabase
+      .from('newsletters')
+      .update({ title, content, published, attachments })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Update newsletter error:', error);
+      return c.json({ error: error.message }, error.code === 'PGRST116' ? 404 : 500);
     }
 
-    const updatedNewsletter = {
-      ...existingNewsletter,
-      title,
-      content,
-      published,
-      created_at,
-      updated_at: updated_at || new Date().toISOString(),
-      attachments,
-    };
-
-    await kv.set(`newsletter:${id}`, updatedNewsletter);
     console.log('Newsletter updated:', id);
-
-    return c.json({ success: true, newsletter: updatedNewsletter });
+    return c.json({ success: true, newsletter });
   } catch (err: any) {
     console.error('Update newsletter error:', err);
     return c.json({ error: err.message }, 500);
@@ -344,9 +337,18 @@ app.delete("/make-server-5f047ca7/newsletters/:id", async (c) => {
     console.log('Authorization check passed');
 
     const id = c.req.param('id');
-    await kv.del(`newsletter:${id}`);
-    console.log('Newsletter deleted:', id);
+    
+    const { error } = await supabase
+      .from('newsletters')
+      .delete()
+      .eq('id', id);
 
+    if (error) {
+      console.error('Delete newsletter error:', error);
+      return c.json({ error: error.message }, 500);
+    }
+
+    console.log('Newsletter deleted:', id);
     return c.json({ success: true });
   } catch (err: any) {
     console.error('Delete newsletter error:', err);

@@ -106,3 +106,4 @@ export function NewsletterDetailModal({ isOpen, onClose, newsletter }: Newslette
   );
 }
 
+

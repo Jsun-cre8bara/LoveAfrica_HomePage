@@ -28,6 +28,7 @@ export default function App() {
   const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
   const [editingNewsletter, setEditingNewsletter] = useState<Newsletter | null>(null);
   const [selectedNewsletter, setSelectedNewsletter] = useState<Newsletter | null>(null);
+  const [isAdminSetupOpen, setIsAdminSetupOpen] = useState(false);
 
   // 세션 확인 및 공지사항, 뉴스레터 로드
   useEffect(() => {
@@ -54,6 +55,7 @@ export default function App() {
         {
           headers: {
             'Authorization': `Bearer ${publicAnonKey}`,
+            'apikey': publicAnonKey,
           },
         }
       );
@@ -74,6 +76,7 @@ export default function App() {
         {
           headers: {
             'Authorization': `Bearer ${publicAnonKey}`,
+            'apikey': publicAnonKey,
           },
         }
       );
@@ -171,6 +174,7 @@ export default function App() {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
+              'apikey': publicAnonKey,
             },
             body: formData,
           });
@@ -224,6 +228,7 @@ export default function App() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
+          'apikey': publicAnonKey,
         },
         body: JSON.stringify(noticeToSave),
       });
@@ -270,6 +275,7 @@ export default function App() {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
+          'apikey': publicAnonKey,
         },
       });
 
@@ -324,6 +330,7 @@ export default function App() {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'apikey': publicAnonKey,
               },
               body: formData,
             }
@@ -359,6 +366,7 @@ export default function App() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
+          'apikey': publicAnonKey,
         },
         body: JSON.stringify(newsletterToSave),
       });
@@ -386,6 +394,7 @@ export default function App() {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
+            'apikey': publicAnonKey,
           },
         }
       );
@@ -408,6 +417,7 @@ export default function App() {
         isAdmin={isAdmin}
         onAdminLogin={() => setIsLoginModalOpen(true)}
         onAdminLogout={handleAdminLogout}
+        onAdminSetup={() => setIsAdminSetupOpen(true)}
       />
       <main>
         <Hero />
@@ -472,7 +482,8 @@ export default function App() {
       />
 
       <AdminSetup
-        isAdmin={isAdmin}
+        isOpen={isAdminSetupOpen}
+        onClose={() => setIsAdminSetupOpen(false)}
       />
     </div>
   );
