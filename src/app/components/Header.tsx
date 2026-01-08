@@ -92,7 +92,6 @@ export function Header({ isAdmin, onAdminLogin, onAdminLogout, onAdminSetup }: H
                 )}
               </div>
             )}
-            <Button size="sm">후원하기</Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -147,7 +146,6 @@ export function Header({ isAdmin, onAdminLogin, onAdminLogout, onAdminSetup }: H
                 >
                   관리자 설정
                 </Button>
-                <Button size="sm" className="w-full">후원하기</Button>
               </>
             )}
           </div>
