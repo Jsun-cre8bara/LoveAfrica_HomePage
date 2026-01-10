@@ -1,11 +1,41 @@
+import { useState, useEffect } from 'react';
+import image01 from '../../assets/image01.png';
+import image02 from '../../assets/image02.jpg';
+import image03 from '../../assets/image03.jpg';
+import image04 from '../../assets/image04.jpg';
+
+const heroImages = [
+  { src: image01, alt: 'Hero Image 1' },
+  { src: image02, alt: 'Hero Image 2' },
+  { src: image03, alt: 'Hero Image 3' },
+  { src: image04, alt: 'Hero Image 4' },
+];
+
 export function Hero() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+    }, 5000); // 5초마다 이미지 전환
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <section className="relative h-[500px] overflow-hidden">
-      <img
-        src="https://images.unsplash.com/photo-1724491801484-efca6936866a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZnJpY2FuJTIwY2hpbGRyZW4lMjBzbWlsaW5nfGVufDF8fHx8MTc2NzUyMjEwOHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-        alt="Children smiling"
-        className="w-full h-full object-cover"
-      />
+      <div className="relative w-full h-full">
+        {heroImages.map((image, index) => (
+          <img
+            key={index}
+            src={image.src}
+            alt={image.alt}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+              index === currentIndex ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
+        ))}
+      </div>
       <div className="absolute inset-0 bg-black/20"></div>
       
       <div className="absolute inset-0 container mx-auto px-6 flex items-center justify-between">
