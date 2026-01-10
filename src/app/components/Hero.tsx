@@ -4,23 +4,59 @@ import image02 from '../../assets/image02.jpg';
 import image03 from '../../assets/image03.jpg';
 import image04 from '../../assets/image04.jpg';
 
-const heroImages = [
+const allImages = [
   { src: image01, alt: 'Hero Image 1' },
   { src: image02, alt: 'Hero Image 2' },
   { src: image03, alt: 'Hero Image 3' },
   { src: image04, alt: 'Hero Image 4' },
 ];
 
+const desktopImages = [
+  { src: image01, alt: 'Hero Image 1' },
+  { src: image03, alt: 'Hero Image 3' },
+];
+
 export function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return true;
+  });
+
+  // 화면 크기에 따른 이미지 배열
+  const heroImages = isMobile ? allImages : desktopImages;
+
+  useEffect(() => {
+    // 화면 크기 확인 함수
+    const checkScreenSize = () => {
+      const mobile = window.innerWidth < 768; // Tailwind md 브레이크포인트
+      setIsMobile((prevMobile) => {
+        if (prevMobile !== mobile) {
+          // 화면 크기가 변경되면 인덱스를 0으로 리셋
+          setCurrentIndex(0);
+        }
+        return mobile;
+      });
+    };
+
+    // resize 이벤트 리스너 추가
+    window.addEventListener('resize', checkScreenSize);
+
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+      setCurrentIndex((prevIndex) => {
+        const images = isMobile ? allImages : desktopImages;
+        return (prevIndex + 1) % images.length;
+      });
     }, 5000); // 5초마다 이미지 전환
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isMobile]);
 
   return (
     <section className="relative h-[500px] overflow-hidden">
