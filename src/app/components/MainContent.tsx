@@ -49,7 +49,8 @@ export function MainContent({
               </div>
               <h3 className="text-2xl mb-4">후원하기</h3>
               <p className="text-gray-600 mb-6">
-                온라인 후원 신청서 작성(정기/일시)
+                온라인 후원 신청서 작성<br />
+                (정기/일시)
               </p>
               <Button 
                 className="w-full" 
