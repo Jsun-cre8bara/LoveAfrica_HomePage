@@ -34,9 +34,9 @@ export function DonationReceiptModal({ isOpen, onClose }: DonationReceiptModalPr
     }
   };
 
-  // 전화번호 포맷 (숫자만, 최대 12자리)
+  // 전화번호 포맷 (숫자만, 최대 11자리)
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 12);
+    const value = e.target.value.replace(/\D/g, '').slice(0, 11);
     setPhone(value);
     if (errors.phone) {
       setErrors({ ...errors, phone: '' });
@@ -65,8 +65,8 @@ export function DonationReceiptModal({ isOpen, onClose }: DonationReceiptModalPr
 
     if (!phone.trim()) {
       newErrors.phone = '전화번호를 입력해주세요.';
-    } else if (phone.length !== 12) {
-      newErrors.phone = '전화번호는 12자리로 입력해주세요. (하이픈 제외)';
+    } else if (phone.length !== 11) {
+      newErrors.phone = '전화번호는 11자리로 입력해주세요. (하이픈 제외)';
     }
 
     if (!email.trim()) {
@@ -95,7 +95,7 @@ export function DonationReceiptModal({ isOpen, onClose }: DonationReceiptModalPr
       
       // 메일 본문 작성
       const formattedBirthDate = `${birthDate.slice(0, 4)}-${birthDate.slice(4, 6)}-${birthDate.slice(6, 8)}`;
-      const formattedPhone = phone.length === 12 
+      const formattedPhone = phone.length === 11 
         ? `${phone.slice(0, 3)}-${phone.slice(3, 7)}-${phone.slice(7)}`
         : phone;
       
@@ -188,14 +188,14 @@ export function DonationReceiptModal({ isOpen, onClose }: DonationReceiptModalPr
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">전화번호 (12자리) *</Label>
+            <Label htmlFor="phone">전화번호 (11자리) *</Label>
             <Input
               id="phone"
               type="text"
               value={phone}
               onChange={handlePhoneChange}
               placeholder="01012345678 (하이픈 제외)"
-              maxLength={12}
+              maxLength={11}
               aria-invalid={!!errors.phone}
             />
             {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}

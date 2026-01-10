@@ -448,9 +448,9 @@ app.post("/make-server-5f047ca7/donation-receipt", async (c) => {
       return c.json({ error: '생년월일은 8자리로 입력해주세요.' }, 400);
     }
 
-    // 전화번호 검증 (12자리)
-    if (phone.length !== 12) {
-      return c.json({ error: '전화번호는 12자리로 입력해주세요.' }, 400);
+    // 전화번호 검증 (11자리)
+    if (phone.length !== 11) {
+      return c.json({ error: '전화번호는 11자리로 입력해주세요.' }, 400);
     }
 
     // 이메일 형식 검증
@@ -463,12 +463,15 @@ app.post("/make-server-5f047ca7/donation-receipt", async (c) => {
     const subject = `${name}님의 기부금 신청서 요청 메일입니다`;
 
     // 메일 본문 작성
+    const formattedPhone = phone.length === 11 
+      ? `${phone.slice(0, 3)}-${phone.slice(3, 7)}-${phone.slice(7)}`
+      : phone;
     const body = `
 기부금 영수증 발급 신청서
 
 이름: ${name}
 생년월일: ${birthDate.slice(0, 4)}-${birthDate.slice(4, 6)}-${birthDate.slice(6, 8)}
-전화번호: ${phone.slice(0, 3)}-${phone.slice(3, 7)}-${phone.slice(7)}
+전화번호: ${formattedPhone}
 이메일: ${email}
 
 신청일시: ${new Date().toLocaleString('ko-KR')}
