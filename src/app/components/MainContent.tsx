@@ -1,8 +1,10 @@
+import React, { useState } from 'react';
 import { Heart, DollarSign, FileText, ChevronRight, Edit, Trash2, Plus, Mail } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Notice } from './NoticeEditor';
 import { Newsletter } from './NewsletterEditor';
+import { DonationReceiptModal } from './DonationReceiptModal';
 
 interface MainContentProps {
   notices: Notice[];
@@ -33,6 +35,8 @@ export function MainContent({
 }: MainContentProps) {
   // 게시된 뉴스레터만 필터링
   const publishedNewsletters = newsletters.filter(n => n.published);
+  const [isDonationReceiptModalOpen, setIsDonationReceiptModalOpen] = useState(false);
+
   return (
     <section className="py-16 px-6 bg-gray-50">
       <div className="container mx-auto max-w-6xl">
@@ -45,7 +49,7 @@ export function MainContent({
               </div>
               <h3 className="text-2xl mb-4">후원하기</h3>
               <p className="text-gray-600 mb-6">
-                정기/일시 후원을 위한 'e-Form 후원 신청서' 입니다.
+                온라인 후원 신청서 작성(정기/일시)
               </p>
               <Button 
                 className="w-full" 
@@ -73,7 +77,13 @@ export function MainContent({
                 기부금 영수증을<br />
                 발급받으실 수 있습니다
               </p>
-              <Button variant="outline" className="w-full">발급하기</Button>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => setIsDonationReceiptModalOpen(true)}
+              >
+                발급하기
+              </Button>
             </div>
           </Card>
 
@@ -240,6 +250,11 @@ export function MainContent({
           </Card>
         </div>
       </div>
+
+      <DonationReceiptModal 
+        isOpen={isDonationReceiptModalOpen}
+        onClose={() => setIsDonationReceiptModalOpen(false)}
+      />
     </section>
   );
 }

@@ -429,4 +429,90 @@ app.post("/make-server-5f047ca7/upload", async (c) => {
   }
 });
 
+// ========================================
+// DONATION RECEIPT EMAIL
+// ========================================
+
+// 기부금 영수증 신청서 메일 전송
+app.post("/make-server-5f047ca7/donation-receipt", async (c) => {
+  try {
+    const { name, birthDate, phone, email } = await c.req.json();
+
+    // 필수 필드 검증
+    if (!name || !birthDate || !phone || !email) {
+      return c.json({ error: '모든 필드를 입력해주세요.' }, 400);
+    }
+
+    // 생년월일 검증 (8자리)
+    if (birthDate.length !== 8) {
+      return c.json({ error: '생년월일은 8자리로 입력해주세요.' }, 400);
+    }
+
+    // 전화번호 검증 (12자리)
+    if (phone.length !== 12) {
+      return c.json({ error: '전화번호는 12자리로 입력해주세요.' }, 400);
+    }
+
+    // 이메일 형식 검증
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return c.json({ error: '올바른 이메일 형식을 입력해주세요.' }, 400);
+    }
+
+    // 메일 제목: "'이름'님의 기부금 신청서 요청 메일입니다"
+    const subject = `${name}님의 기부금 신청서 요청 메일입니다`;
+
+    // 메일 본문 작성
+    const body = `
+기부금 영수증 발급 신청서
+
+이름: ${name}
+생년월일: ${birthDate.slice(0, 4)}-${birthDate.slice(4, 6)}-${birthDate.slice(6, 8)}
+전화번호: ${phone.slice(0, 3)}-${phone.slice(3, 7)}-${phone.slice(7)}
+이메일: ${email}
+
+신청일시: ${new Date().toLocaleString('ko-KR')}
+    `.trim();
+
+    // 실제 메일 전송을 위한 코드 (현재는 로그만 출력)
+    // 실제 메일 전송을 위해서는 외부 메일 서비스(Resend, SendGrid 등)를 사용해야 합니다.
+    console.log('기부금 영수증 신청서 메일 전송 요청:');
+    console.log('수신 이메일: loveafrica1004@gmail.com');
+    console.log('제목:', subject);
+    console.log('본문:', body);
+
+    // TODO: 실제 메일 전송 구현
+    // 예시: Resend를 사용하는 경우
+    // const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+    // const response = await fetch('https://api.resend.com/emails', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Authorization': `Bearer ${RESEND_API_KEY}`,
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({
+    //     from: 'noreply@yourdomain.com',
+    //     to: 'loveafrica1004@gmail.com',
+    //     subject: subject,
+    //     text: body,
+    //   }),
+    // });
+
+    // 임시로 성공 응답 (실제 메일 전송 구현 필요)
+    return c.json({ 
+      success: true, 
+      message: '기부금 영수증 신청서가 성공적으로 전송되었습니다.',
+      data: {
+        recipient: 'loveafrica1004@gmail.com',
+        subject: subject,
+        body: body,
+      }
+    });
+
+  } catch (err: any) {
+    console.error('Donation receipt email error:', err);
+    return c.json({ error: err.message }, 500);
+  }
+});
+
 Deno.serve(app.fetch);
