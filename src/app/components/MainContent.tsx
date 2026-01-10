@@ -78,7 +78,6 @@ export function MainContent({
                 발급받으실 수 있습니다
               </p>
               <Button 
-                variant="outline" 
                 className="w-full"
                 onClick={() => setIsDonationReceiptModalOpen(true)}
               >
@@ -98,7 +97,7 @@ export function MainContent({
                 후원 및 사업에 대한<br />
                 문의를 남겨주세요
               </p>
-              <Button variant="outline" className="w-full" asChild>
+              <Button className="w-full" asChild>
                 <a href="mailto:loveafrica1004@gmail.com">문의하기</a>
               </Button>
             </div>
