@@ -38,19 +38,21 @@ export function Hero() {
       </div>
       <div className="absolute inset-0 bg-black/20"></div>
       
-      <div className="absolute inset-0 container mx-auto px-6 flex items-center justify-between">
-        <div className="relative">
-          <div className="w-72 h-72 bg-blue-500 rounded-full flex items-center justify-center text-white">
+      <div className="absolute inset-0 container mx-auto px-6 md:flex md:items-center md:justify-between">
+        {/* 타이틀 - 모바일: 좌측 상단 (25% 크기), 데스크톱: 좌측 중앙 (원래 크기) */}
+        <div className="absolute top-4 left-6 md:relative md:top-0 md:left-0">
+          <div className="w-[72px] h-[72px] md:w-72 md:h-72 bg-blue-500 rounded-full flex items-center justify-center text-white">
             <div className="text-center">
-              <div className="text-5xl font-bold mb-2">LOVE</div>
-              <div className="text-5xl font-bold">AFRICA</div>
+              <div className="text-xs md:text-5xl font-bold md:mb-2">LOVE</div>
+              <div className="text-xs md:text-5xl font-bold">AFRICA</div>
             </div>
           </div>
         </div>
         
-        <div className="text-white text-right">
-          <h1 className="text-5xl mb-4">우리는 함께</h1>
-          <h1 className="text-5xl">기적을 만듭니다.</h1>
+        {/* 오른쪽 텍스트 - 모바일: 하단 우측, 데스크톱: 우측 중앙 */}
+        <div className="absolute bottom-6 right-6 md:relative md:bottom-0 md:right-0 text-white text-right">
+          <h1 className="text-2xl md:text-5xl mb-2 md:mb-4">우리는 함께</h1>
+          <h1 className="text-2xl md:text-5xl">기적을 만듭니다.</h1>
         </div>
       </div>
     </section>
