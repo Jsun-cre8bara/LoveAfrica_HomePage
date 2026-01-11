@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { projectId, publicAnonKey } from '/src/lib/supabase';
 
 interface DonationReceiptModalProps {
   isOpen: boolean;
@@ -90,42 +91,36 @@ export function DonationReceiptModal({ isOpen, onClose }: DonationReceiptModalPr
     setIsSubmitting(true);
 
     try {
-      // 메일 제목: "'이름'님의 기부금 신청서 요청 메일입니다"
-      const subject = encodeURIComponent(`${name}님의 기부금 신청서 요청 메일입니다`);
-      
-      // 메일 본문 작성
-      const formattedBirthDate = `${birthDate.slice(0, 4)}-${birthDate.slice(4, 6)}-${birthDate.slice(6, 8)}`;
-      const formattedPhone = phone.length === 11 
-        ? `${phone.slice(0, 3)}-${phone.slice(3, 7)}-${phone.slice(7)}`
-        : phone;
-      
-      const body = encodeURIComponent(`
-기부금 영수증 발급 신청서
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-5f047ca7/donation-receipt`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: publicAnonKey,
+          },
+          body: JSON.stringify({
+            name,
+            birthDate,
+            phone,
+            email,
+          }),
+        }
+      );
 
-이름: ${name}
-생년월일: ${formattedBirthDate}
-전화번호: ${formattedPhone}
-이메일: ${email}
+      const data = await response.json().catch(() => ({}));
 
-신청일시: ${new Date().toLocaleString('ko-KR')}
-      `.trim());
+      if (!response.ok) {
+        throw new Error(data.error || '신청 접수에 실패했습니다. 다시 시도해주세요.');
+      }
 
-      // mailto 링크 생성
-      const mailtoLink = `mailto:loveafrica1004@gmail.com?subject=${subject}&body=${body}`;
-      
-      // mailto 링크 열기
-      window.location.href = mailtoLink;
-
-      // 성공 시 폼 리셋 및 모달 닫기 (약간의 지연 후)
-      setTimeout(() => {
-        alert('메일 앱이 열렸습니다. 메일을 전송해주세요.');
-        setName('');
-        setBirthDate('');
-        setPhone('');
-        setEmail('');
-        setErrors({});
-        onClose();
-      }, 500);
+      alert('신청이 접수되었습니다. 담당자가 확인 후 이메일로 안내드릴게요.');
+      setName('');
+      setBirthDate('');
+      setPhone('');
+      setEmail('');
+      setErrors({});
+      onClose();
     } catch (error: any) {
       console.error('Error submitting form:', error);
       alert(error.message || '메일 전송에 실패했습니다. 다시 시도해주세요.');

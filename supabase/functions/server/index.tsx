@@ -4,6 +4,10 @@ import { logger } from "npm:hono/logger";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const app = new Hono();
+const ADMIN_EMAIL = "loveafrica1004@gmail.com";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const RESEND_FROM =
+  Deno.env.get("RESEND_FROM_EMAIL") || "Love Africa <onboarding@resend.dev>";
 
 // Supabase 클라이언트 생성
 const supabase = createClient(
@@ -38,6 +42,44 @@ async function initializeStorage() {
 
 // 서버 시작 시 스토리지 초기화
 initializeStorage();
+
+async function sendEmail({
+  subject,
+  text,
+  replyTo,
+}: {
+  subject: string;
+  text: string;
+  replyTo?: string;
+}) {
+  if (!RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY가 설정되지 않았습니다.");
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: RESEND_FROM,
+      to: [ADMIN_EMAIL],
+      subject,
+      text,
+      reply_to: replyTo ? [replyTo] : undefined,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `메일 전송 실패 (status ${response.status}): ${errorText}`,
+    );
+  }
+
+  return response.json();
+}
 
 // Enable logger
 app.use('*', logger(console.log));
@@ -477,43 +519,122 @@ app.post("/make-server-5f047ca7/donation-receipt", async (c) => {
 신청일시: ${new Date().toLocaleString('ko-KR')}
     `.trim();
 
-    // 실제 메일 전송을 위한 코드 (현재는 로그만 출력)
-    // 실제 메일 전송을 위해서는 외부 메일 서비스(Resend, SendGrid 등)를 사용해야 합니다.
-    console.log('기부금 영수증 신청서 메일 전송 요청:');
-    console.log('수신 이메일: loveafrica1004@gmail.com');
-    console.log('제목:', subject);
-    console.log('본문:', body);
+    // DB 저장
+    const { data: saved, error: insertError } = await supabase
+      .from("donation_receipts")
+      .insert([
+        {
+          name,
+          birth_date: birthDate,
+          phone,
+          email,
+          created_at: new Date().toISOString(),
+        },
+      ])
+      .select()
+      .single();
 
-    // TODO: 실제 메일 전송 구현
-    // 예시: Resend를 사용하는 경우
-    // const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-    // const response = await fetch('https://api.resend.com/emails', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${RESEND_API_KEY}`,
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({
-    //     from: 'noreply@yourdomain.com',
-    //     to: 'loveafrica1004@gmail.com',
-    //     subject: subject,
-    //     text: body,
-    //   }),
-    // });
+    if (insertError) {
+      console.error("Donation receipt insert error:", insertError);
+      return c.json(
+        {
+          error:
+            insertError.message ||
+            "기부금 영수증 신청서를 저장하는 중 오류가 발생했습니다.",
+        },
+        500,
+      );
+    }
 
-    // 임시로 성공 응답 (실제 메일 전송 구현 필요)
-    return c.json({ 
-      success: true, 
-      message: '기부금 영수증 신청서가 성공적으로 전송되었습니다.',
-      data: {
-        recipient: 'loveafrica1004@gmail.com',
-        subject: subject,
-        body: body,
-      }
+    // 메일 전송
+    await sendEmail({
+      subject,
+      text: body,
+      replyTo: email,
+    });
+
+    return c.json({
+      success: true,
+      message: "기부금 영수증 신청서가 성공적으로 접수되었습니다.",
+      data: saved,
     });
 
   } catch (err: any) {
     console.error('Donation receipt email error:', err);
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// ========================================
+// INQUIRY EMAIL
+// ========================================
+
+app.post("/make-server-5f047ca7/inquiries", async (c) => {
+  try {
+    const { name, contact, email, message } = await c.req.json();
+
+    if (!name || !contact || !email || !message) {
+      return c.json({ error: "모든 필드를 입력해주세요." }, 400);
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return c.json({ error: "올바른 이메일 형식을 입력해주세요." }, 400);
+    }
+
+    const subject = `${name}님의 후원/사업 문의입니다`;
+    const body = `
+새 문의가 접수되었습니다.
+
+이름: ${name}
+연락처: ${contact}
+이메일: ${email}
+
+문의 내용:
+${message}
+
+접수일시: ${new Date().toLocaleString('ko-KR')}
+    `.trim();
+
+    const { data: saved, error: insertError } = await supabase
+      .from("inquiries")
+      .insert([
+        {
+          name,
+          contact,
+          email,
+          message,
+          created_at: new Date().toISOString(),
+        },
+      ])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Inquiry insert error:", insertError);
+      return c.json(
+        {
+          error:
+            insertError.message ||
+            "문의 내용을 저장하는 중 오류가 발생했습니다.",
+        },
+        500,
+      );
+    }
+
+    await sendEmail({
+      subject,
+      text: body,
+      replyTo: email,
+    });
+
+    return c.json({
+      success: true,
+      message: "문의가 성공적으로 접수되었습니다.",
+      data: saved,
+    });
+  } catch (err: any) {
+    console.error("Inquiry email error:", err);
     return c.json({ error: err.message }, 500);
   }
 });

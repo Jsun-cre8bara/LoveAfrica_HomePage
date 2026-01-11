@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Notice } from './NoticeEditor';
 import { Newsletter } from './NewsletterEditor';
 import { DonationReceiptModal } from './DonationReceiptModal';
+import { InquiryModal } from './InquiryModal';
 
 interface MainContentProps {
   notices: Notice[];
@@ -36,6 +37,7 @@ export function MainContent({
   // 게시된 뉴스레터만 필터링
   const publishedNewsletters = newsletters.filter(n => n.published);
   const [isDonationReceiptModalOpen, setIsDonationReceiptModalOpen] = useState(false);
+  const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
 
   return (
     <section className="py-16 px-6 bg-gray-50">
@@ -98,8 +100,8 @@ export function MainContent({
                 후원 및 사업에 대한<br />
                 문의를 남겨주세요
               </p>
-              <Button className="w-full" asChild>
-                <a href="mailto:loveafrica1004@gmail.com">문의하기</a>
+              <Button className="w-full" onClick={() => setIsInquiryModalOpen(true)}>
+                문의하기
               </Button>
             </div>
           </Card>
@@ -254,6 +256,10 @@ export function MainContent({
       <DonationReceiptModal 
         isOpen={isDonationReceiptModalOpen}
         onClose={() => setIsDonationReceiptModalOpen(false)}
+      />
+      <InquiryModal
+        isOpen={isInquiryModalOpen}
+        onClose={() => setIsInquiryModalOpen(false)}
       />
     </section>
   );
