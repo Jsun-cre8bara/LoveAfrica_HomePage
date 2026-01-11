@@ -2,7 +2,6 @@ import { Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { createRemoteJWKSet, jwtVerify } from "npm:jose";
 
 const app = new Hono();
 const ADMIN_EMAIL =
@@ -124,44 +123,23 @@ async function requireAdmin(c: any) {
   }
 
   try {
-    // JWT의 iss(프로젝트)에서 JWKS를 가져와 서명 검증
-    const parts = accessToken.split(".");
-    if (parts.length !== 3) throw new Error("Malformed JWT");
-    const payload = JSON.parse(
-      new TextDecoder().decode(
-        Uint8Array.from(atob(parts[1]), (c) => c.charCodeAt(0)),
-      ),
-    );
-    const iss = (payload?.iss as string) || "";
-    if (!iss) throw new Error("Missing iss in JWT");
+    // Supabase auth로 토큰 검증
+    const { data, error } = await supabase.auth.getUser(accessToken);
+    
+    if (error || !data?.user) {
+      console.error('Auth error:', error);
+      return c.json({ error: 'Invalid or expired token' }, 401);
+    }
 
-    const jwksUrl = new URL(
-      `${iss.replace(/\/$/, "")}/.well-known/jwks.json`,
-    );
-    const JWKS = createRemoteJWKSet(jwksUrl);
-
-    const { payload: verified } = await jwtVerify(accessToken, JWKS, {
-      issuer: iss,
-      audience: "authenticated",
-    });
-
-    const userMeta: any =
-      (verified as any).user_metadata ||
-      (verified as any).app_metadata ||
-      {};
-    const role =
-      userMeta?.role ||
-      (verified as any).role ||
-      (verified as any)["https://hasura.io/jwt/claims"]?.["x-hasura-role"];
-
-    if (role !== "admin") {
-      return c.json({ error: "Admin role required" }, 403);
+    const role = (data.user.user_metadata as any)?.role;
+    if (role !== 'admin') {
+      return c.json({ error: 'Admin role required' }, 403);
     }
 
     return null;
   } catch (err: any) {
-    console.error("JWT verify error:", err);
-    return c.json({ error: "Invalid JWT" }, 401);
+    console.error('JWT verify error:', err);
+    return c.json({ error: 'Invalid JWT' }, 401);
   }
 }
 
@@ -340,15 +318,8 @@ app.get("/make-server-5f047ca7/newsletters", async (c) => {
 // 뉴스레터 생성 (관리자만)
 app.post("/make-server-5f047ca7/newsletters", async (c) => {
   try {
-    const authHeader = c.req.header('Authorization');
-    console.log('POST /newsletters - Authorization header exists:', !!authHeader);
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('No authorization header');
-      return c.json({ error: 'No authorization header' }, 401);
-    }
-
-    console.log('Authorization check passed');
+    const authError = await requireAdmin(c);
+    if (authError) return authError;
 
     const { title, content, published, attachments = [] } = await c.req.json();
     
@@ -374,15 +345,8 @@ app.post("/make-server-5f047ca7/newsletters", async (c) => {
 // 뉴스레터 수정 (관리자만)
 app.put("/make-server-5f047ca7/newsletters/:id", async (c) => {
   try {
-    const authHeader = c.req.header('Authorization');
-    console.log('PUT /newsletters/:id - Authorization header exists:', !!authHeader);
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('No authorization header');
-      return c.json({ error: 'No authorization header' }, 401);
-    }
-
-    console.log('Authorization check passed');
+    const authError = await requireAdmin(c);
+    if (authError) return authError;
 
     const id = c.req.param('id');
     const { title, content, published, attachments } = await c.req.json();
@@ -410,15 +374,8 @@ app.put("/make-server-5f047ca7/newsletters/:id", async (c) => {
 // 뉴스레터 삭제 (관리자만)
 app.delete("/make-server-5f047ca7/newsletters/:id", async (c) => {
   try {
-    const authHeader = c.req.header('Authorization');
-    console.log('DELETE /newsletters/:id - Authorization header exists:', !!authHeader);
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('No authorization header');
-      return c.json({ error: 'No authorization header' }, 401);
-    }
-
-    console.log('Authorization check passed');
+    const authError = await requireAdmin(c);
+    if (authError) return authError;
 
     const id = c.req.param('id');
     
