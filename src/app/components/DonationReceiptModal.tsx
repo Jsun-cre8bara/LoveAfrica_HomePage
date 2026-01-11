@@ -111,7 +111,9 @@ export function DonationReceiptModal({ isOpen, onClose }: DonationReceiptModalPr
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data.error || '신청 접수에 실패했습니다. 다시 시도해주세요.');
+        const detail =
+          data?.error || data?.message || `신청 접수에 실패했습니다. (HTTP ${response.status})`;
+        throw new Error(detail);
       }
 
       const warning =
