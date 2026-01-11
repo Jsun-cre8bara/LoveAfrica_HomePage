@@ -70,7 +70,8 @@ export function InquiryModal({ isOpen, onClose }: InquiryModalProps) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            apikey: publicAnonKey,
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'apikey': publicAnonKey,
           },
           body: JSON.stringify({
             name,
@@ -81,11 +82,24 @@ export function InquiryModal({ isOpen, onClose }: InquiryModalProps) {
         }
       );
 
-      const data = await response.json().catch(() => ({}));
+      let data: any = {};
+      const responseText = await response.text();
+      
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (parseError) {
+        console.error('Response parse error:', parseError, 'Response text:', responseText);
+        throw new Error(`서버 응답을 처리할 수 없습니다. (HTTP ${response.status})`);
+      }
+
       if (!response.ok) {
-        const detail =
-          data?.error || data?.message || `문의 접수에 실패했습니다. (HTTP ${response.status})`;
-        throw new Error(detail);
+        const errorMessage =
+          data?.error || 
+          data?.message || 
+          responseText ||
+          `문의 접수에 실패했습니다. (HTTP ${response.status})`;
+        console.error('Server error:', { status: response.status, data, responseText });
+        throw new Error(errorMessage);
       }
 
       const warning =
@@ -100,7 +114,12 @@ export function InquiryModal({ isOpen, onClose }: InquiryModalProps) {
       onClose();
     } catch (error: any) {
       console.error('Inquiry submit error:', error);
-      alert(error.message || '문의 전송에 실패했습니다. 다시 시도해주세요.');
+      const errorMessage = 
+        error.message || 
+        (error instanceof TypeError && error.message.includes('fetch'))
+          ? '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.'
+          : '문의 전송에 실패했습니다. 다시 시도해주세요.';
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

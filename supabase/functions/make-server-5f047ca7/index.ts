@@ -4,7 +4,8 @@ import { logger } from "npm:hono/logger";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const app = new Hono();
-const ADMIN_EMAIL = "loveafrica1004@gmail.com";
+const ADMIN_EMAIL =
+  Deno.env.get("ADMIN_EMAIL") || "loveafrica1004@gmail.com";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const RESEND_FROM =
   Deno.env.get("RESEND_FROM_EMAIL") || "Love Africa <onboarding@resend.dev>";
@@ -57,6 +58,11 @@ async function sendEmail({
       "메일 발송 환경변수(RESEND_API_KEY)가 설정되지 않아 관리자 메일을 보낼 수 없습니다.",
     );
   }
+  if (!ADMIN_EMAIL) {
+    throw new Error(
+      "메일 발송 환경변수(ADMIN_EMAIL)가 설정되지 않아 관리자 메일을 보낼 수 없습니다.",
+    );
+  }
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -69,7 +75,7 @@ async function sendEmail({
       to: [ADMIN_EMAIL],
       subject,
       text,
-      reply_to: replyTo ? [replyTo] : undefined,
+      reply_to: replyTo || undefined,
     }),
   });
 
