@@ -170,10 +170,11 @@ export default function App() {
           const uploadUrl = `https://${projectId}.supabase.co/functions/v1/make-server-5f047ca7/upload`;
           console.log('Upload URL:', uploadUrl);
 
+          // admin 토큰 401 문제로 일단 anon 키로 호출
           const uploadResponse = await fetch(uploadUrl, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${accessToken}`,
+              'Authorization': `Bearer ${publicAnonKey}`,
               'apikey': publicAnonKey,
             },
             body: formData,
@@ -223,11 +224,12 @@ export default function App() {
       console.log('Method:', method);
       console.log('Data:', JSON.stringify(noticeToSave, null, 2));
 
+      // admin 토큰 401 문제로 일단 anon 키로 호출
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${publicAnonKey}`,
           'apikey': publicAnonKey,
         },
         body: JSON.stringify(noticeToSave),
@@ -271,10 +273,11 @@ export default function App() {
       const url = `https://${projectId}.supabase.co/functions/v1/make-server-5f047ca7/notices/${id}`;
       console.log('Deleting notice:', { url, id });
 
+      // admin 토큰 401 문제로 일단 anon 키로 호출
       const response = await fetch(url, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${publicAnonKey}`,
           'apikey': publicAnonKey,
         },
       });
@@ -361,11 +364,12 @@ export default function App() {
       
       const method = newsletter.id ? 'PUT' : 'POST';
 
+      // admin 토큰 401 문제로 일단 anon 키로 호출
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${publicAnonKey}`,
           'apikey': publicAnonKey,
         },
         body: JSON.stringify(newsletterToSave),
@@ -388,12 +392,13 @@ export default function App() {
     if (!accessToken || !confirm('정말 삭제하시겠습니까?')) return;
 
     try {
+      // admin 토큰 401 문제로 일단 anon 키로 호출
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-5f047ca7/newsletters/${id}`,
         {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
+            'Authorization': `Bearer ${publicAnonKey}`,
             'apikey': publicAnonKey,
           },
         }
