@@ -114,7 +114,14 @@ export function DonationReceiptModal({ isOpen, onClose }: DonationReceiptModalPr
         throw new Error(data.error || '신청 접수에 실패했습니다. 다시 시도해주세요.');
       }
 
-      alert('신청이 접수되었습니다. 담당자가 확인 후 이메일로 안내드릴게요.');
+      const warning =
+        data.emailStatus === 'failed' && data.emailError
+          ? `\n(관리자 메일 전송 실패: ${data.emailError})`
+          : data.emailStatus === 'failed'
+          ? '\n(관리자 메일 전송에 실패했습니다. 메일 설정을 확인해주세요.)'
+          : '';
+
+      alert(`신청이 접수되었습니다.${warning}`);
       setName('');
       setBirthDate('');
       setPhone('');

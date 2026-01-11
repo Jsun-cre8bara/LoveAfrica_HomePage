@@ -86,7 +86,14 @@ export function InquiryModal({ isOpen, onClose }: InquiryModalProps) {
         throw new Error(data.error || '문의 접수에 실패했습니다. 다시 시도해주세요.');
       }
 
-      alert('문의가 접수되었습니다. 빠르게 답변드리겠습니다.');
+      const warning =
+        data.emailStatus === 'failed' && data.emailError
+          ? `\n(관리자 메일 전송 실패: ${data.emailError})`
+          : data.emailStatus === 'failed'
+          ? '\n(관리자 메일 전송에 실패했습니다. 메일 설정을 확인해주세요.)'
+          : '';
+
+      alert(`문의가 접수되었습니다. 빠르게 답변드리겠습니다.${warning}`);
       resetForm();
       onClose();
     } catch (error: any) {

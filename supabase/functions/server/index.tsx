@@ -53,7 +53,9 @@ async function sendEmail({
   replyTo?: string;
 }) {
   if (!RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY가 설정되지 않았습니다.");
+    throw new Error(
+      "메일 발송 환경변수(RESEND_API_KEY)가 설정되지 않아 관리자 메일을 보낼 수 없습니다.",
+    );
   }
 
   const response = await fetch("https://api.resend.com/emails", {
@@ -546,17 +548,30 @@ app.post("/make-server-5f047ca7/donation-receipt", async (c) => {
       );
     }
 
-    // 메일 전송
-    await sendEmail({
-      subject,
-      text: body,
-      replyTo: email,
-    });
+    let emailStatus: "sent" | "failed" | "skipped" = "sent";
+    let emailError: string | undefined;
+
+    try {
+      await sendEmail({
+        subject,
+        text: body,
+        replyTo: email,
+      });
+    } catch (err: any) {
+      emailStatus = "failed";
+      emailError = err?.message || "메일 전송 중 알 수 없는 오류가 발생했습니다.";
+      console.error("Donation receipt email send error:", err);
+    }
 
     return c.json({
       success: true,
-      message: "기부금 영수증 신청서가 성공적으로 접수되었습니다.",
+      message:
+        emailStatus === "sent"
+          ? "기부금 영수증 신청서가 성공적으로 접수되었습니다."
+          : "신청이 저장되었으나 관리자 메일 전송에 실패했습니다. 관리자에게 메일 환경변수를 확인해주세요.",
       data: saved,
+      emailStatus,
+      emailError,
     });
 
   } catch (err: any) {
@@ -622,16 +637,30 @@ ${message}
       );
     }
 
-    await sendEmail({
-      subject,
-      text: body,
-      replyTo: email,
-    });
+    let emailStatus: "sent" | "failed" | "skipped" = "sent";
+    let emailError: string | undefined;
+
+    try {
+      await sendEmail({
+        subject,
+        text: body,
+        replyTo: email,
+      });
+    } catch (err: any) {
+      emailStatus = "failed";
+      emailError = err?.message || "메일 전송 중 알 수 없는 오류가 발생했습니다.";
+      console.error("Inquiry email send error:", err);
+    }
 
     return c.json({
       success: true,
-      message: "문의가 성공적으로 접수되었습니다.",
+      message:
+        emailStatus === "sent"
+          ? "문의가 성공적으로 접수되었습니다."
+          : "문의는 저장되었으나 관리자 메일 전송에 실패했습니다. 관리자에게 메일 환경변수를 확인해주세요.",
       data: saved,
+      emailStatus,
+      emailError,
     });
   } catch (err: any) {
     console.error("Inquiry email error:", err);
