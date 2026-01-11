@@ -110,6 +110,13 @@ app.get("/make-server-5f047ca7/health", (c) => {
   return c.json({ status: "ok" });
 });
 
+// base64url 디코더 (JWT 파싱용)
+function decodeBase64Url(value: string) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = "=".repeat((4 - (normalized.length % 4)) % 4);
+  return atob(normalized + padding);
+}
+
 // ===== 인증/인가 헬퍼 =====
 async function requireAdmin(c: any) {
   const authHeader = c.req.header('Authorization');
@@ -130,11 +137,7 @@ async function requireAdmin(c: any) {
     }
 
     // JWT payload 디코드
-    const payload = JSON.parse(
-      new TextDecoder().decode(
-        Uint8Array.from(atob(parts[1]), (c) => c.charCodeAt(0)),
-      ),
-    );
+    const payload = JSON.parse(decodeBase64Url(parts[1]));
 
     // 토큰 만료 확인
     const now = Math.floor(Date.now() / 1000);
