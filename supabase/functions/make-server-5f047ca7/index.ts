@@ -110,6 +110,31 @@ app.get("/make-server-5f047ca7/health", (c) => {
   return c.json({ status: "ok" });
 });
 
+// ===== 인증/인가 헬퍼 =====
+async function requireAdmin(c: any) {
+  const authHeader = c.req.header('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ error: 'No authorization header' }, 401);
+  }
+
+  const accessToken = authHeader.replace('Bearer ', '').trim();
+  if (!accessToken) {
+    return c.json({ error: 'Empty access token' }, 401);
+  }
+
+  const { data, error } = await supabase.auth.getUser(accessToken);
+  if (error || !data?.user) {
+    return c.json({ error: 'Invalid or expired token' }, 401);
+  }
+
+  const role = (data.user.user_metadata as any)?.role;
+  if (role !== 'admin') {
+    return c.json({ error: 'Admin role required' }, 403);
+  }
+
+  return null;
+}
+
 // 관리자 회원가입 (최초 1회만 실행)
 app.post("/make-server-5f047ca7/admin/signup", async (c) => {
   try {
@@ -179,16 +204,8 @@ app.get("/make-server-5f047ca7/notices", async (c) => {
 // 공지사항 생성 (관리자만)
 app.post("/make-server-5f047ca7/notices", async (c) => {
   try {
-    // Supabase가 이미 검증한 사용자 정보 가져오기
-    const authHeader = c.req.header('Authorization');
-    console.log('POST /notices - Authorization header exists:', !!authHeader);
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('No authorization header');
-      return c.json({ error: 'No authorization header' }, 401);
-    }
-
-    console.log('Authorization check passed');
+    const authError = await requireAdmin(c);
+    if (authError) return authError;
 
     const { title, content, date, views = 0, attachments = [] } = await c.req.json();
     
@@ -214,15 +231,8 @@ app.post("/make-server-5f047ca7/notices", async (c) => {
 // 공지사항 수정 (관리자만)
 app.put("/make-server-5f047ca7/notices/:id", async (c) => {
   try {
-    const authHeader = c.req.header('Authorization');
-    console.log('PUT /notices/:id - Authorization header exists:', !!authHeader);
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('No authorization header');
-      return c.json({ error: 'No authorization header' }, 401);
-    }
-
-    console.log('Authorization check passed');
+    const authError = await requireAdmin(c);
+    if (authError) return authError;
 
     const id = c.req.param('id');
     const { title, content, date, views, attachments } = await c.req.json();
@@ -250,15 +260,8 @@ app.put("/make-server-5f047ca7/notices/:id", async (c) => {
 // 공지사항 삭제 (관리자만)
 app.delete("/make-server-5f047ca7/notices/:id", async (c) => {
   try {
-    const authHeader = c.req.header('Authorization');
-    console.log('DELETE /notices/:id - Authorization header exists:', !!authHeader);
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('No authorization header');
-      return c.json({ error: 'No authorization header' }, 401);
-    }
-
-    console.log('Authorization check passed');
+    const authError = await requireAdmin(c);
+    if (authError) return authError;
 
     const id = c.req.param('id');
     
@@ -414,14 +417,8 @@ app.delete("/make-server-5f047ca7/newsletters/:id", async (c) => {
 // 파일 업로드 (관리자만)
 app.post("/make-server-5f047ca7/upload", async (c) => {
   try {
-    const authHeader = c.req.header('Authorization');
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('No authorization header');
-      return c.json({ error: 'No authorization header' }, 401);
-    }
-
-    console.log('Authorization check passed for upload');
+    const authError = await requireAdmin(c);
+    if (authError) return authError;
 
     const formData = await c.req.formData();
     const file = formData.get('file') as File;
