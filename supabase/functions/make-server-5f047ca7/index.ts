@@ -2,6 +2,7 @@ import { Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { createRemoteJWKSet, jwtVerify } from "npm:jose";
 
 const app = new Hono();
 const ADMIN_EMAIL =
@@ -122,17 +123,46 @@ async function requireAdmin(c: any) {
     return c.json({ error: 'Empty access token' }, 401);
   }
 
-  const { data, error } = await supabase.auth.getUser(accessToken);
-  if (error || !data?.user) {
-    return c.json({ error: 'Invalid or expired token' }, 401);
-  }
+  try {
+    // JWT의 iss(프로젝트)에서 JWKS를 가져와 서명 검증
+    const parts = accessToken.split(".");
+    if (parts.length !== 3) throw new Error("Malformed JWT");
+    const payload = JSON.parse(
+      new TextDecoder().decode(
+        Uint8Array.from(atob(parts[1]), (c) => c.charCodeAt(0)),
+      ),
+    );
+    const iss = (payload?.iss as string) || "";
+    if (!iss) throw new Error("Missing iss in JWT");
 
-  const role = (data.user.user_metadata as any)?.role;
-  if (role !== 'admin') {
-    return c.json({ error: 'Admin role required' }, 403);
-  }
+    const jwksUrl = new URL(
+      `${iss.replace(/\/$/, "")}/.well-known/jwks.json`,
+    );
+    const JWKS = createRemoteJWKSet(jwksUrl);
 
-  return null;
+    const { payload: verified } = await jwtVerify(accessToken, JWKS, {
+      issuer: iss,
+      audience: "authenticated",
+    });
+
+    const userMeta: any =
+      (verified as any).user_metadata ||
+      (verified as any).app_metadata ||
+      {};
+    const role =
+      userMeta?.role ||
+      (verified as any).role ||
+      (verified as any)["https://hasura.io/jwt/claims"]?.["x-hasura-role"];
+
+    if (role !== "admin") {
+      return c.json({ error: "Admin role required" }, 403);
+    }
+
+    return null;
+  } catch (err: any) {
+    console.error("JWT verify error:", err);
+    return c.json({ error: "Invalid JWT" }, 401);
+  }
 }
 
 // 관리자 회원가입 (최초 1회만 실행)
