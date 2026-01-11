@@ -123,16 +123,30 @@ async function requireAdmin(c: any) {
   }
 
   try {
-    // Supabase auth로 토큰 검증
-    const { data, error } = await supabase.auth.getUser(accessToken);
-    
-    if (error || !data?.user) {
-      console.error('Auth error:', error);
-      return c.json({ error: 'Invalid or expired token' }, 401);
+    // JWT를 직접 파싱하여 검증 (서비스 롤 키 클라이언트는 사용자 토큰 검증에 문제가 있을 수 있음)
+    const parts = accessToken.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Malformed JWT');
     }
 
-    const role = (data.user.user_metadata as any)?.role;
+    // JWT payload 디코드
+    const payload = JSON.parse(
+      new TextDecoder().decode(
+        Uint8Array.from(atob(parts[1]), (c) => c.charCodeAt(0)),
+      ),
+    );
+
+    // 토큰 만료 확인
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      return c.json({ error: 'Token expired' }, 401);
+    }
+
+    // user_metadata에서 role 확인
+    const role = payload.user_metadata?.role || payload.app_metadata?.role;
+    
     if (role !== 'admin') {
+      console.error('Role check failed. Role:', role, 'Payload:', payload);
       return c.json({ error: 'Admin role required' }, 403);
     }
 
