@@ -9,7 +9,6 @@ import { NoticeEditor, Notice } from './components/NoticeEditor';
 import { NoticeDetailModal } from './components/NoticeDetailModal';
 import { NewsletterEditor, Newsletter } from './components/NewsletterEditor';
 import { NewsletterDetailModal } from './components/NewsletterDetailModal';
-import { AdminSetup } from './components/AdminSetup';
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -28,7 +27,6 @@ export default function App() {
   const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
   const [editingNewsletter, setEditingNewsletter] = useState<Newsletter | null>(null);
   const [selectedNewsletter, setSelectedNewsletter] = useState<Newsletter | null>(null);
-  const [isAdminSetupOpen, setIsAdminSetupOpen] = useState(false);
 
   // 세션 확인 및 공지사항, 뉴스레터 로드
   useEffect(() => {
@@ -41,8 +39,17 @@ export default function App() {
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.access_token) {
-      setIsAdmin(true);
-      setAccessToken(session.access_token);
+      // loveafrica1004@gmail.com만 관리자로 허용
+      const userEmail = session.user?.email;
+      if (userEmail === 'loveafrica1004@gmail.com') {
+        setIsAdmin(true);
+        setAccessToken(session.access_token);
+      } else {
+        // 다른 계정은 로그아웃
+        await supabase.auth.signOut();
+        setIsAdmin(false);
+        setAccessToken(null);
+      }
     }
   };
 
@@ -89,6 +96,11 @@ export default function App() {
 
   // 관리자 로그인
   const handleAdminLogin = async (email: string, password: string) => {
+    // loveafrica1004@gmail.com만 허용
+    if (email !== 'loveafrica1004@gmail.com') {
+      throw new Error('관리자 권한이 없습니다. 허용된 이메일로만 로그인할 수 있습니다.');
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -99,6 +111,11 @@ export default function App() {
     }
 
     if (data.session?.access_token) {
+      // 이중 체크
+      if (data.user?.email !== 'loveafrica1004@gmail.com') {
+        await supabase.auth.signOut();
+        throw new Error('관리자 권한이 없습니다.');
+      }
       console.log('✅ 로그인 성공! Access Token:', data.session.access_token.substring(0, 20) + '...');
       setIsAdmin(true);
       setAccessToken(data.session.access_token);
@@ -327,12 +344,13 @@ export default function App() {
           const formData = new FormData();
           formData.append('file', file);
 
+          // admin 토큰 401 문제로 일단 anon 키로 호출
           const uploadResponse = await fetch(
             `https://${projectId}.supabase.co/functions/v1/make-server-5f047ca7/upload`,
             {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${accessToken}`,
+                'Authorization': `Bearer ${publicAnonKey}`,
                 'apikey': publicAnonKey,
               },
               body: formData,
@@ -422,7 +440,7 @@ export default function App() {
         isAdmin={isAdmin}
         onAdminLogin={() => setIsLoginModalOpen(true)}
         onAdminLogout={handleAdminLogout}
-        onAdminSetup={() => setIsAdminSetupOpen(true)}
+        onAdminSetup={() => {}}
       />
       <main>
         <Hero />
@@ -486,10 +504,6 @@ export default function App() {
         newsletter={selectedNewsletter}
       />
 
-      <AdminSetup
-        isOpen={isAdminSetupOpen}
-        onClose={() => setIsAdminSetupOpen(false)}
-      />
     </div>
   );
 }

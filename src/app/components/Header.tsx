@@ -79,15 +79,6 @@ export function Header({ isAdmin, onAdminLogin, onAdminLogout, onAdminSetup }: H
                     >
                       로그인
                     </button>
-                    <button
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
-                      onClick={() => {
-                        setIsAdminMenuOpen(false);
-                        onAdminSetup();
-                      }}
-                    >
-                      관리자 설정
-                    </button>
                   </div>
                 )}
               </div>
@@ -130,23 +121,13 @@ export function Header({ isAdmin, onAdminLogin, onAdminLogout, onAdminSetup }: H
                 로그아웃
               </Button>
             ) : (
-              <>
-                <Button 
-                  size="sm" 
-                  className="w-full"
-                  onClick={onAdminLogin}
-                >
-                  관리자 로그인
-                </Button>
-                <Button 
-                  size="sm" 
-                  className="w-full"
-                  variant="outline"
-                  onClick={onAdminSetup}
-                >
-                  관리자 설정
-                </Button>
-              </>
+              <Button 
+                size="sm" 
+                className="w-full"
+                onClick={onAdminLogin}
+              >
+                관리자 로그인
+              </Button>
             )}
           </div>
         )}
