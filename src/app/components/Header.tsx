@@ -14,6 +14,38 @@ export function Header({ isAdmin, onAdminLogin, onAdminLogout, onAdminSetup }: H
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
 
+  const handleMenuClick = (e: React.MouseEvent<HTMLAnchorElement>, type: 'about' | 'projects' | 'donate' | 'newsletter' | 'notices') => {
+    e.preventDefault();
+    
+    if (type === 'about' || type === 'projects') {
+      alert('준비중입니다.');
+      return;
+    }
+    
+    if (type === 'donate') {
+      window.open('https://docs.google.com/forms/d/e/1FAIpQLSfrcI9BTLGViDWpNFHTzwy_ClSa06EwCF-hzaTDamZTtPereQ/viewform', '_blank', 'noopener,noreferrer');
+      return;
+    }
+    
+    if (type === 'newsletter') {
+      const element = document.getElementById('newsletter');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      setIsMenuOpen(false);
+      return;
+    }
+    
+    if (type === 'notices') {
+      const element = document.getElementById('notices');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      setIsMenuOpen(false);
+      return;
+    }
+  };
+
   return (
     <header className="bg-white border-b border-gray-200">
       <nav className="container mx-auto px-6 py-4">
@@ -29,19 +61,39 @@ export function Header({ isAdmin, onAdminLogin, onAdminLogout, onAdminSetup }: H
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <a href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <a 
+              href="#about" 
+              onClick={(e) => handleMenuClick(e, 'about')}
+              className="text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
               LOA소개
             </a>
-            <a href="#projects" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <a 
+              href="#projects" 
+              onClick={(e) => handleMenuClick(e, 'projects')}
+              className="text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
               후원사업안내
             </a>
-            <a href="#donate" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <a 
+              href="#donate" 
+              onClick={(e) => handleMenuClick(e, 'donate')}
+              className="text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
               후원하기
             </a>
-            <a href="#newsletter" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <a 
+              href="#newsletter" 
+              onClick={(e) => handleMenuClick(e, 'newsletter')}
+              className="text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
               뉴스레터
             </a>
-            <a href="#notices" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <a 
+              href="#notices" 
+              onClick={(e) => handleMenuClick(e, 'notices')}
+              className="text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
               공지/알림
             </a>
           </div>
@@ -97,19 +149,39 @@ export function Header({ isAdmin, onAdminLogin, onAdminLogout, onAdminSetup }: H
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4 flex flex-col gap-4">
-            <a href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <a 
+              href="#about" 
+              onClick={(e) => handleMenuClick(e, 'about')}
+              className="text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
               LOA소개
             </a>
-            <a href="#projects" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <a 
+              href="#projects" 
+              onClick={(e) => handleMenuClick(e, 'projects')}
+              className="text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
               후원사업안내
             </a>
-            <a href="#donate" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <a 
+              href="#donate" 
+              onClick={(e) => handleMenuClick(e, 'donate')}
+              className="text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
               후원하기
             </a>
-            <a href="#newsletter" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <a 
+              href="#newsletter" 
+              onClick={(e) => handleMenuClick(e, 'newsletter')}
+              className="text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
               뉴스레터
             </a>
-            <a href="#notices" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <a 
+              href="#notices" 
+              onClick={(e) => handleMenuClick(e, 'notices')}
+              className="text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
               공지/알림
             </a>
             {isAdmin ? (

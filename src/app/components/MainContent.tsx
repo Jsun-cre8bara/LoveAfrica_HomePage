@@ -40,7 +40,7 @@ export function MainContent({
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
 
   return (
-    <section className="py-16 px-6 bg-gray-50">
+    <section id="main-content" className="py-16 px-6 bg-gray-50">
       <div className="container mx-auto max-w-6xl">
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {/* 후원하기 */}
@@ -109,7 +109,7 @@ export function MainContent({
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* 공지사항 */}
-          <Card className="p-6 bg-white">
+          <Card id="notices" className="p-6 bg-white scroll-mt-20">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl text-blue-600">공지사항</h3>
               <div className="flex gap-2">
@@ -177,7 +177,7 @@ export function MainContent({
           </Card>
 
           {/* 뉴스레터 */}
-          <Card className="p-6 bg-white">
+          <Card id="newsletter" className="p-6 bg-white scroll-mt-20">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl text-blue-600">뉴스레터</h3>
               <div className="flex gap-2">
